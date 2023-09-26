@@ -1,0 +1,21 @@
+--VISA_MASTER_CARDS EXTRACT 
+WITH A AS
+(
+SELECT a.* 
+FROM POWER_BI_360_VIEW_V2 a
+WHERE a.YEARS_WITH_BANK_CATEGORY = 'Relatively New'
+AND a.TOTAL_POINTS_CATEGORY IN ('No Card Usage','Low Card Usage')
+AND a.DEBIT_CARD = 1
+AND a.CUSTOMERSTATUS = 'ACTIVE'
+),
+B AS
+(
+SELECT CL.RECORD_STATE, CL.CLIENT_NUMBER, CP.PAYMENT_SCHEME
+FROM dwh.dwd_client@ICUBEDMT CL
+LEFT JOIN dwh.dwd_card@ICUBEDMT C ON c.client_idt = cl.record_idt AND C.record_state = CL.record_state
+JOIN dwh.dwd_card_product@ICUBEDMT cp ON cp.id = c.card_product_id AND cp.record_state = c.record_state
+WHERE CL.RECORD_STATE = 'A'
+AND TRUNC(C.EXPIRY_DATE) > TRUNC(SYSDATE)
+)
+SELECT * FROM A
+LEFT JOIN B ON B.CLIENT_NUMBER = A.CIF_ID
